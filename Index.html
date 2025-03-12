@@ -3,43 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Election Voting System</title>
+    <title>Vote Tracking System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Election Voting System</h1>
-        
-        <div id="auth-section">
-            <h2>Login</h2>
-            <input type="text" id="login-email" placeholder="Enter your email">
-            <input type="password" id="login-password" placeholder="Enter your password">
-            <button onclick="login()">Login</button>
-            <p>Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
-        </div>
-        
-        <div id="register-section" style="display: none;">
-            <h2>Register</h2>
-            <input type="text" id="register-email" placeholder="Enter your email">
-            <input type="password" id="register-password" placeholder="Enter your password">
-            <input type="password" id="confirm-password" placeholder="Confirm your password">
-            <button onclick="register()">Register</button>
-            <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
-        </div>
-
-        <div id="vote-section" style="display: none;">
-            <h2>Submit Votes</h2>
-            <form id="vote-form">
-                <div id="candidates">
-                    <!-- Candidate vote inputs will be dynamically added here -->
-                </div>
-                <button type="submit">Submit Vote</button>
-            </form>
-        </div>
+        <header>
+            <h1>VOTE TRACKING SYSTEM</h1>
+            <h2>ELECTION DAY!</h2>
+        </header>
+        <main>
+            <section class="vote-message">
+                <p>MY VOTE CAN MAKE A DIFFERENCE!</p>
+            </section>
+            <section class="login-form">
+                <h3>LOGIN FORM</h3>
+                <input type="email" placeholder="Enter your email here">
+                <input type="password" placeholder="Enter password here">
+                <button onclick="login()">LOG IN</button>
+                <p>Don't have an account? <a href="#" onclick="register()">SIGN UP NOW</a></p>
+            </section>
+        </main>
+        <footer>
+            <p>TRANSPARENCY: A KEY FACTOR TO PROGRESS AND DEVELOPMENT</p>
+        </footer>
     </div>
-    
-    <script src="config.js"></script>
     <script src="script.js"></script>
+    <script src="config.js"></script>
 </body>
 </html>
+
 

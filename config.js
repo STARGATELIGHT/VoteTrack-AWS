@@ -1,4 +1,9 @@
-const API_GATEWAY_URL = "https://your-api-gateway-url/vote"; // Replace with actual API Gateway endpoint
-const COGNITO_USER_POOL_ID = "your-user-pool-id";
-const COGNITO_CLIENT_ID = "your-client-id";
-const COGNITO_REGION = "your-region";
+const config = {
+    apiBaseUrl: "https://api.example.com", // Replace with actual backend API URL
+    authEndpoint: "/auth/login",
+    registerEndpoint: "/auth/register",
+    voteEndpoint: "/vote/submit",
+};
+
+console.log("Config loaded.");
+

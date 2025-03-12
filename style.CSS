@@ -1,7 +1,9 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
     text-align: center;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
 }
 .container {
     width: 50%;
@@ -9,25 +11,47 @@ body {
     background: white;
     padding: 20px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
+    border-radius: 8px;
     margin-top: 50px;
 }
-input {
+header h1, header h2 {
+    margin: 5px 0;
+    color: #333;
+}
+.vote-message p {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 20px 0;
+}
+.login-form {
+    background: #eef;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+.login-form input {
     display: block;
     width: 80%;
     margin: 10px auto;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid #ccc;
     border-radius: 5px;
 }
-button {
+.login-form button {
+    padding: 10px 15px;
     background: #28a745;
     color: white;
-    padding: 10px 15px;
     border: none;
-    border-radius: 5px;
     cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
 }
-button:hover {
+.login-form button:hover {
     background: #218838;
 }
+footer {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+}
+

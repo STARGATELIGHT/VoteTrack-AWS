@@ -1,0 +1,168 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Serverless Voting System with Real-Time Analytics using OpenSearch and Athena'
+
+Resources:
+  # S3 Bucket for frontend hosting and Athena query results
+  VotingResultsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'voting-results-${AWS::AccountId}'
+      AccessControl: Private
+      LifecycleConfiguration:
+        Rules:
+          - Id: ArchiveOldAthenaResults
+            Status: Enabled
+            Prefix: athena/
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: STANDARD_IA  # Move to Infrequent Access after 30 days
+              - TransitionInDays: 90
+                StorageClass: GLACIER  # Archive to Glacier after 90 days
+            ExpirationInDays: 365  # Delete files after 1 year
+
+  # CloudFront Distribution for frontend acceleration
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt VotingResultsBucket.DomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        Enabled: true
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          ViewerProtocolPolicy: redirect-to-https
+          TargetOriginId: S3Origin
+          ForwardedValues:
+            QueryString: false
+
+  # Cognito User Pool for authentication
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: VotingUserPool
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: false
+      AutoVerifiedAttributes:
+        - email
+
+  # Kinesis Stream for real-time vote ingestion
+  VotingStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: VotingStream
+      ShardCount: 2  
+
+  # DynamoDB Table to store voting results
+  VotingTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: VotingResults
+      AttributeDefinitions:
+        - AttributeName: Candidate
+          AttributeType: S
+      KeySchema:
+        - AttributeName: Candidate
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  # OpenSearch for real-time vote analysis
+  OpenSearchDomain:
+    Type: AWS::OpenSearchService::Domain
+    Properties:
+      DomainName: VotingResultsSearch
+      EngineVersion: 'OpenSearch_2.3'
+      ClusterConfig:
+        InstanceType: t3.small.search
+        InstanceCount: 1
+      EBSOptions:
+        EBSEnabled: true
+        VolumeSize: 10
+
+  # Athena for historical vote analysis
+  AthenaDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: voting_analysis
+
+  AthenaTable:
+    Type: AWS::Glue::Table
+    Properties:
+      DatabaseName: !Ref AthenaDatabase
+      TableInput:
+        Name: voting_data
+        TableType: EXTERNAL_TABLE
+        StorageDescriptor:
+          Columns:
+            - Name: candidate
+              Type: string
+            - Name: votes
+              Type: int
+          Location: !Sub 's3://${VotingResultsBucket}/athena/'
+          InputFormat: 'org.apache.hadoop.mapred.TextInputFormat'
+          OutputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+          SerdeInfo:
+            SerializationLibrary: 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
+            Parameters:
+              'field.delim': ','
+
+  # IAM Role for Lambda execution
+  IAMLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: VotingLambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: VotingLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:Scan
+                Resource: !GetAtt VotingTable.Arn
+              - Effect: Allow
+                Action:
+                  - kinesis:PutRecord
+                  - kinesis:GetRecords
+                Resource: !GetAtt VotingStream.Arn
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: !Sub 'arn:aws:s3:::${VotingResultsBucket}/*'
+              - Effect: Allow
+                Action:
+                  - athena:StartQueryExecution
+                  - athena:GetQueryResults
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
